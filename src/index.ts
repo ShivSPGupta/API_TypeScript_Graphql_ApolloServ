@@ -24,11 +24,6 @@ mongoose.connect(process.env.MONGO_URI as string)
 const server = new ApolloServer({ typeDefs, resolvers });
 
 
-// app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-//     console.error(err.stack);
-//     res.status(500).json({ message: 'An unexpected error occurred' });
-//   });
-
 
 (async () => {
   await server.start();
