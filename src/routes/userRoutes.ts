@@ -1,15 +1,15 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import express,{ Router, Request, Response, NextFunction } from 'express';
 import { User } from '../models/User';
-import {authenticateToken } from '../middleware/auth';
+import {authenticateToken} from '../middleware/auth';
 import { AuthenticatedRequest } from '../types/express';
+import jwt from 'jsonwebtoken';
 
-const router = Router();
- const auth = authenticateToken;
+const router = express.Router();
 /** 
  * Create a new user (Register) 
  * POST /api/users 
  */
-router.post('/users', async (req: Request, res: Response, next: NextFunction):Promise<any> => {
+router.post('/users/register', async (req: Request, res: Response, next: NextFunction):Promise<any> => {
   try {
     const { email, password } = req.body;
 
@@ -64,7 +64,7 @@ router.get('/users/:id', async (req: Request, res: Response, next: NextFunction)
  * Update a user by ID 
  * PUT /api/users/:id 
  */
-router.put('/users/:id', async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+router.put('/users/update/:id', async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
     const { name, email, password } = req.body;
 
@@ -85,7 +85,7 @@ router.put('/users/:id', async (req: Request, res: Response, next: NextFunction)
  * Delete a user by ID 
  * DELETE /api/users/:id 
  */
-router.delete('/users/:id', async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+router.delete('/users/delete/:id', async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
     const deletedUser = await User.findByIdAndDelete(req.params.id);
     if (!deletedUser) return res.status(404).json({ message: 'User not found' });
@@ -94,5 +94,24 @@ router.delete('/users/:id', async (req: Request, res: Response, next: NextFuncti
     next(error);
   }
 });
+
+// Login and generate JWT
+router.post('/users/login', async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+
+    const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET!, { expiresIn: '1h' });
+    res.json({ token });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 
 export default router;

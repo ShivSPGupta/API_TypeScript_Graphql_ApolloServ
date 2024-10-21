@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { AuthenticatedRequest } from '../types/express';
 
 // export interface AuthenticatedRequest extends Request {
@@ -8,12 +8,17 @@ import { AuthenticatedRequest } from '../types/express';
   
 
 export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  const token = req.header('Authorization')?.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'Access Denied' });
+  const authHeader = req.header('Authorization');
+  const token = authHeader && authHeader.split(' ')[1]; // Format: "Bearer <token>"
 
-  jwt.verify(token, process.env.JWT_SECRET!, (err, user) => {
+  if (!token) return res.status(401).json({ message: 'Access Denied. No token provided.' });
+
+  // Verify the token
+  jwt.verify(token, process.env.JWT_SECRET!, (err, decoded) => {
     if (err) return res.status(403).json({ message: 'Invalid Token' });
-    req.user = user;
-    next();
+
+    // Store the decoded user info in the request object
+    req.user = decoded as { id: string; email: string }; 
+    next(); // Proceed to the next middleware or route handler
   });
 };
