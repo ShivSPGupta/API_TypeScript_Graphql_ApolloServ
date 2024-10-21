@@ -66,11 +66,11 @@ router.get('/users/:id', async (req: Request, res: Response, next: NextFunction)
  */
 router.put('/users/update/:id', async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
-    const { name, email, password } = req.body;
+    const { email, password } = req.body;
 
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
-      { name, email, password },
+      { email, password },
       { new: true }
     );
 
