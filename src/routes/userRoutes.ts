@@ -26,6 +26,25 @@ router.post('/users/register', async (req: Request, res: Response, next: NextFun
   }
 });
 
+/** 
+ * Get all users
+ * GET /api/users 
+ */
+router.get('/users', async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<any>=> {
+  try {
+    const { page = 1, limit = 10, sort = 'email', filter = '' } = req.query;
+
+    const query = filter ? { email: { $regex: filter, $options: 'i' } } : {};
+    const users = await User.find(query)
+      .sort({ [sort as string]: 1 })
+      .skip((+page - 1) * +limit)
+      .limit(+limit);
+
+    res.json(users);
+  } catch (error) {
+    next(error);
+  }
+});
 
 /** 
  * Get a single user by ID 
